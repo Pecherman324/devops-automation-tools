@@ -30,4 +30,5 @@ COPY . .
 EXPOSE 5000
 
 # Comando para ejecutar la aplicación
+ENV HOST=0.0.0.0
 CMD ["python", "app.py"]
