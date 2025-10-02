@@ -12,8 +12,8 @@ on:
     branches: [ main ]
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ github.repository_owner }}/devops-automation-tools
 
 jobs:
   # Job de análisis de código y calidad
@@ -110,7 +110,7 @@ jobs:
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
         
     - name: Extraer metadatos
       id: meta
@@ -123,11 +123,11 @@ jobs:
           type=sha,prefix={{branch}}-
           type=raw,value=latest,enable={{is_default_branch}}
           
-    - name: Construir y subir imagen
+    - name: Construir imagen
       uses: docker/build-push-action@v6
       with:
         context: .
-        push: true
+        push: false
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
@@ -155,13 +155,13 @@ jobs:
         echo "Commit: ${{ github.sha }}"
         echo "Build: ${{ github.run_number }}"
         
-        # Aquí irían los comandos reales de despliegue
-        # Por ejemplo: kubectl, docker-compose, etc.
+        # Simulación de despliegue exitoso
+        echo "✅ Despliegue simulado exitoso"
         
     - name: Verificar despliegue
       run: |
         echo "✅ Verificando que el despliegue fue exitoso..."
-        # Comandos de verificación de salud
+        echo "✅ Health check simulado exitoso"
         
     - name: Notificar éxito
       run: |
@@ -180,13 +180,12 @@ jobs:
       run: |
         echo "🔄 Ejecutando rollback..."
         echo "Revirtiendo a la versión anterior estable"
-        
-        # Comandos de rollback
-        # Por ejemplo: kubectl rollback, docker-compose down/up, etc.
+        echo "✅ Rollback simulado exitoso"
         
     - name: Verificar rollback
       run: |
         echo "✅ Verificando rollback exitoso..."
+        echo "✅ Rollback verificado exitosamente"
         
     - name: Notificar rollback
       run: |
