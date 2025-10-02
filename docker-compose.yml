@@ -1,0 +1,17 @@
+# DevOps Automation Tools - Docker Compose
+# Materia: Herramientas de Automatización en DevOps
+# Profesor: Froylan Alonso Perez
+# Alumno: Cesar Ulises Saldivar Chavez
+
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: devops-automation-app
+    ports:
+      - "5000:5000"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=False
+    restart: unless-stopped

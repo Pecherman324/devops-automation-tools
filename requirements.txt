@@ -1,0 +1,8 @@
+# DevOps Automation Tools - Dependencias
+# Materia: Herramientas de Automatización en DevOps
+# Profesor: Froylan Alonso Perez
+# Alumno: Cesar Ulises Saldivar Chavez
+
+Flask==2.3.3
+requests==2.31.0
+pytest==7.4.3

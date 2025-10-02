@@ -1,0 +1,195 @@
+# DevOps Automation Tools - CI/CD Pipeline
+# Materia: Herramientas de Automatización en DevOps
+# Profesor: Froylan Alonso Perez
+# Alumno: Cesar Ulises Saldivar Chavez
+
+name: DevOps Automation CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Job de análisis de código y calidad
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality & Security Analysis
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Instalar dependencias
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install flake8 pytest bandit safety
+        
+    - name: Análisis de código con Flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: Análisis de seguridad con Bandit
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . -f txt
+        
+    - name: Verificar vulnerabilidades con Safety
+      run: |
+        safety check --json --output safety-report.json || true
+        safety check
+        
+    - name: Subir reportes de seguridad
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  # Job de pruebas unitarias
+  test:
+    runs-on: ubuntu-latest
+    name: Unit Tests
+    needs: code-quality
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Instalar dependencias
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+        
+    - name: Ejecutar pruebas unitarias
+      run: |
+        pytest --cov=app --cov-report=xml --cov-report=html
+        
+    - name: Subir reporte de cobertura
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # Job de construcción de imagen Docker
+  build:
+    runs-on: ubuntu-latest
+    name: Build Docker Image
+    needs: [code-quality, test]
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+      
+    - name: Configurar Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Login al registro
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Extraer metadatos
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+          
+    - name: Construir y subir imagen
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          BUILD_NUMBER=${{ github.run_number }}
+          GIT_COMMIT=${{ github.sha }}
+
+  # Job de despliegue (solo en main)
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+    - name: Checkout código
+      uses: actions/checkout@v4
+      
+    - name: Desplegar aplicación
+      run: |
+        echo "🚀 Desplegando aplicación a producción..."
+        echo "Imagen: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+        echo "Commit: ${{ github.sha }}"
+        echo "Build: ${{ github.run_number }}"
+        
+        # Aquí irían los comandos reales de despliegue
+        # Por ejemplo: kubectl, docker-compose, etc.
+        
+    - name: Verificar despliegue
+      run: |
+        echo "✅ Verificando que el despliegue fue exitoso..."
+        # Comandos de verificación de salud
+        
+    - name: Notificar éxito
+      run: |
+        echo "🎉 Despliegue exitoso!"
+        echo "URL: https://devops-automation.example.com"
+
+  # Job de rollback (en caso de fallo)
+  rollback:
+    runs-on: ubuntu-latest
+    name: Rollback on Failure
+    needs: deploy
+    if: failure() && github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Rollback a versión anterior
+      run: |
+        echo "🔄 Ejecutando rollback..."
+        echo "Revirtiendo a la versión anterior estable"
+        
+        # Comandos de rollback
+        # Por ejemplo: kubectl rollback, docker-compose down/up, etc.
+        
+    - name: Verificar rollback
+      run: |
+        echo "✅ Verificando rollback exitoso..."
+        
+    - name: Notificar rollback
+      run: |
+        echo "⚠️ Rollback completado"
+        echo "Sistema restaurado a versión anterior"
+
