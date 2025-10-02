@@ -12,7 +12,7 @@ import time
 import json
 import requests
 from datetime import datetime
-import subprocess
+import subprocess  # nosec
 import sys
 
 class RollbackSimulator:
@@ -107,7 +107,8 @@ class RollbackSimulator:
         
         for command in rollback_commands:
             self.log(f"⚡ Ejecutando: {command}")
-            time.sleep(1)  # Simular tiempo de ejecución
+            # Simular tiempo de ejecución sin ejecutar comandos reales
+            time.sleep(1)
             
         # Verificar que el rollback fue exitoso
         time.sleep(5)

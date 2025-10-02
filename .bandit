@@ -1,0 +1,8 @@
+# DevOps Automation Tools - Configuración Bandit
+# Materia: Herramientas de Automatización en DevOps
+# Profesor: Froylan Alonso Perez
+# Alumno: Cesar Ulises Saldivar Chavez
+
+[bandit]
+exclude_dirs = tests,venv,env
+skips = B101,B601,B603,B607

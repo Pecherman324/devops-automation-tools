@@ -5,7 +5,7 @@ from datetime import datetime
 app = Flask(__name__)
 
 # Configuración de la aplicación
-app.config['SECRET_KEY'] = 'devops-automation-2024'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'devops-automation-2024')
 
 @app.route('/')
 def index():
@@ -45,5 +45,5 @@ def version():
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
-    debug = os.getenv('DEBUG', 'True').lower() == 'true'
+    debug = os.getenv('DEBUG', 'False').lower() == 'true'
     app.run(host='0.0.0.0', port=port, debug=debug)
